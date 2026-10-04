@@ -27,22 +27,28 @@ export function MoviePlayer({movie,record,favorite,onClose,onFavorite,onProgress
     const video = videoRef.current;
     if(!video || !episode || episode.kind === "external") return;
     let disposed=false; let hls:Hls|undefined; let lastSave=0;
+    const previous=resumeRef.current;
+    const resumeTarget=switchPosition.current || (previous?.episodeId===episode.id ? previous.seconds : 0);
+    switchPosition.current=0;
+    let restorePending=resumeTarget>0;
+    const restore=()=>{
+      if(!restorePending||!Number.isFinite(video.duration)||video.duration<=0)return;
+      if(resumeTarget<video.duration-3)video.currentTime=resumeTarget;
+      restorePending=false;
+    };
     setError("");setReady(false);
     const save=()=>{
-      if(!Number.isFinite(video.currentTime)||video.currentTime<=0)return;
+      if(restorePending||!Number.isFinite(video.currentTime)||video.currentTime<=0)return;
       progressRef.current({movie,lineId:line.id,episodeId:episode.id,seconds:video.currentTime,duration:Number.isFinite(video.duration)?video.duration:0,updatedAt:Date.now()});
     };
     const tick=()=>{if(Date.now()-lastSave>=5000){lastSave=Date.now();save();}};
     const loaded=()=>{
-      const previous=resumeRef.current;
-      const resume=switchPosition.current || (previous?.episodeId===episode.id ? previous.seconds : 0);
-      if(Number.isFinite(video.duration) && resume>0 && resume<video.duration-3)video.currentTime=resume;
-      switchPosition.current=0;
+      restore();
       video.playbackRate=Number(speed);
     };
-    const canPlay=()=>setReady(true);
+    const canPlay=()=>{restore();setReady(true);};
     const failed=()=>setError("视频没有加载成功。可以重试、切换线路，或到来源页面观看。");
-    video.addEventListener("loadedmetadata",loaded);video.addEventListener("canplay",canPlay);video.addEventListener("error",failed);video.addEventListener("timeupdate",tick);video.addEventListener("pause",save);video.addEventListener("ended",save);
+    video.addEventListener("loadedmetadata",loaded);video.addEventListener("durationchange",restore);video.addEventListener("canplay",canPlay);video.addEventListener("error",failed);video.addEventListener("timeupdate",tick);video.addEventListener("pause",save);video.addEventListener("ended",save);
     (async()=>{
       try{
         if(episode.kind==="hls" && !video.canPlayType("application/vnd.apple.mpegurl")){
@@ -54,7 +60,7 @@ export function MoviePlayer({movie,record,favorite,onClose,onFavorite,onProgress
         }else {video.src=episode.url;video.load();}
       }catch{if(!disposed)failed();}
     })();
-    return()=>{disposed=true;save();video.removeEventListener("loadedmetadata",loaded);video.removeEventListener("canplay",canPlay);video.removeEventListener("error",failed);video.removeEventListener("timeupdate",tick);video.removeEventListener("pause",save);video.removeEventListener("ended",save);hls?.destroy();video.pause();video.removeAttribute("src");video.load();};
+    return()=>{disposed=true;save();video.removeEventListener("loadedmetadata",loaded);video.removeEventListener("durationchange",restore);video.removeEventListener("canplay",canPlay);video.removeEventListener("error",failed);video.removeEventListener("timeupdate",tick);video.removeEventListener("pause",save);video.removeEventListener("ended",save);hls?.destroy();video.pause();video.removeAttribute("src");video.load();};
     // A progress update must not reload the active stream.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[videoElement,movie.id,line?.id,episode?.id,episode?.url,retry]);
