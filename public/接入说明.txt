@@ -1,0 +1,40 @@
+家映 · 片源接入说明
+
+目前内置 2 部 Blender 公开授权预告，来自 W3C 测试媒体镜像。不是全平台影视库。
+
+1. 在当前设备导入片库
+进入“片源设置”，下载格式示例，编辑影片和播放地址后导入 JSON。
+支持 HTTPS MP4、WebM、M3U8；平台页面地址按 external 类型打开来源网站。
+示例：id 是稳定的影片编号，title 是片名，lines 是播放线路，episodes 是剧集。
+同一部影片不同线路中，剧集 title 应一致，便于切换时对应剧集。
+导入片库、收藏和历史只保存在当前浏览器。
+
+2. 接入服务器片源
+配置环境变量 CINEMA_SOURCES 为 JSON 数组，最多 6 个片源。
+示例中的域名需要替换为你实际有权接入的片源地址：
+[{"id":"mycatalog","name":"家庭片库","type":"catalog","url":"https://你的片库域名/catalog.json"}]
+
+catalog 接口返回影片数组，或 {"movies":[...]}，影片字段同下载的格式示例。
+maccms 接口返回 {"list":[...]}，识别 vod_id、vod_name、vod_pic、vod_year、vod_content、vod_play_from、vod_play_url。
+搜索请求使用 ac=detail&wd=搜索词，详情使用 ac=detail&ids=影片编号。
+需要请求头的接口可加 headers 对象，凭证只留在服务器配置中。
+仅使用公网 HTTPS 域名；不接受 localhost、IP 地址、内网域名或自动跳转。
+单接口超时 8 秒，最大响应 2 MB，成功结果缓存 60 秒。
+接口连接成功不代表每个视频都能播放；片源仍可能存在跨域、授权或过期问题。
+
+3. 接入 AI
+使用支持 chat/completions 和 JSON 输出的服务。
+AI_BASE_URL：兼容接口的基础地址，包含版本路径，例如 https://你的AI服务域名/v1
+AI_MODEL：服务实际支持的模型名称
+AI_API_KEY：服务密钥（设置为服务端 secret）
+AI 根据描述生成最多 3 个检索词，再查询实际已配置片库。
+当前没有配置密钥，因此 AI 未启用。系统不会用规则搜索冒充大模型。
+不要把密钥写进网页或导入片库文件。
+
+4. 部署与使用
+本地运行：npm run dev，默认 http://127.0.0.1:5173
+本地环境配置写入项目 .env 文件，字段见 .env.example，修改后重启服务。
+生产构建：npm run build
+Sites 部署采用私有访问，家庭分享需另外配置指定成员访问权限。
+跨设备同步、定时采集任务、各平台专用适配器尚未实现。
+当前不提供绕过平台会员、DRM、验证码或访问限制的功能。

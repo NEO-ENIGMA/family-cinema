@@ -1,0 +1,23 @@
+{
+  "movies": [
+    {
+      "id": "bunny-trailer",
+      "title": "大雄兔 · 示例片库",
+      "originalTitle": "Big Buck Bunny",
+      "year": "2008",
+      "poster": "https://media.w3.org/2010/05/bunny/poster.png",
+      "description": "公开授权预告。添加自己的影片时，请替换片名、简介和播放地址。",
+      "tags": ["动画", "预告"],
+      "attribution": "© 2008 Blender Foundation · CC BY 3.0 · W3C 媒体镜像",
+      "attributionUrl": "https://peach.blender.org/about/",
+      "lines": [
+        { "id": "main", "name": "主线路", "episodes": [
+          { "id": "trailer", "title": "预告片", "url": "https://media.w3.org/2010/05/bunny/trailer.mp4", "kind": "mp4" }
+        ] },
+        { "id": "backup", "name": "备用线路（同一视频，供测试切换）", "episodes": [
+          { "id": "trailer", "title": "预告片", "url": "https://media.w3.org/2010/05/bunny/trailer.mp4", "kind": "mp4" }
+        ] }
+      ]
+    }
+  ]
+}
